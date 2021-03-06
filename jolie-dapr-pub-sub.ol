@@ -1,16 +1,17 @@
+from protocols.http import DefaultOperationHttpRequest
+
 type DaprSubscriptionResponse {
-  _* {
-    pubsubname: string
-    topic: string
-    route: string
-  }
+	_* {
+		pubsubname: string
+		topic: string
+		route: string
+	}
 }
 
 interface DaprSubscribeInterface {
-requestResponse:
-	post( undefined )( undefined )
-requestResponse:
-  get( undefined )( undefined )  
+RequestResponse:
+	get( DefaultOperationHttpRequest )( undefined ),
+	jqstatus( undefined )( undefined )
 }
 
 service DaprSubscribeService {
@@ -18,23 +19,23 @@ service DaprSubscribeService {
 
 	inputPort DaprSubscribeService {
 		location: "socket://localhost:9000"
-		protocol: http { format = "json" default.get = "get" default.post = "post" }    
+		protocol: http { format = "json" default.get = "get" }
 		interfaces: DaprSubscribeInterface   
 	}
 
 	main {
-    [get( request )( response ) { 
-      if( request.operation == "dapr/subscribe" ) {         
-        response._[0].pubsubname = "pubsub"
-        response._[0].topic = "JolieQueue"
-        response._[0].route = "jqstatus"
-      } 
-    }]
+		[ get( request )( response ) { 
+			if( request.operation == "dapr/subscribe" ) {      
+				response._ << {
+					pubsubname = "pubsub"
+					topic = "JolieQueue"
+					route = "jqstatus"
+				}
+			}
+		} ]
 
-    [post( request )( response ) {
-      if( request.operation == "jqstatus" ) {         
-        response.status = "Status is: " + request.data.status
-      }
-    }]
+		[ jqstatus( request )( {
+			status = "Status is: " + request.status
+		} ) ]
 	}
 }
