@@ -1,4 +1,5 @@
 from protocols.http import DefaultOperationHttpRequest
+from console import Console
 
 type DaprSubscriptionResponse {
 	_* {
@@ -19,10 +20,10 @@ service DaprSubscribeService {
 
 	inputPort DaprSubscribeService {
 		location: "socket://localhost:9000"
-		protocol: http { format = "json" default.get = "get" }
+		protocol: http { format = "json" default.get = "get" default.post = "jqstatus" }
 		interfaces: DaprSubscribeInterface   
 	}
-
+	embed Console as console
 	main {
 		[ get( request )( response ) { 
 			if( request.operation == "dapr/subscribe" ) {      
@@ -34,8 +35,9 @@ service DaprSubscribeService {
 			}
 		} ]
 
-		[ jqstatus( request )( {
-			status = "Status is: " + request.status
-		} ) ]
+		[ jqstatus( request )( response ) {
+			println@console( "Message received! " + request.data.message )()
+			response.status = "SUCCESS"
+		} ]
 	}
 }
